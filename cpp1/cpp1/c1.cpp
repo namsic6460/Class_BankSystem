@@ -5,6 +5,7 @@ using namespace std;
 
 #define NAME_LEN 20
 #define ACCOUNT_MAX 100
+#define MIN_MKACC_MONEY 10
 
 typedef struct {
 	int accId;
@@ -54,8 +55,8 @@ void mkAcc() {
 		return;
 	}
 
-	if (balance < 10) {
-		cout << "계좌 생성 시 최소 10원 이상의 돈을 입금해야합니다." << endl;
+	if (balance < MIN_MKACC_MONEY) {
+		cout << "계좌 생성 시 최소 " << MIN_MKACC_MONEY << " 이상의 돈을 입금해야합니다." << endl;
 		return;
 	}
 
