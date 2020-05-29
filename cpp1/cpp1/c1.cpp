@@ -275,10 +275,8 @@ int main() {
 		cout << "¼±ÅÃ: ";
 		cin >> input;
 
-		if (input == 5) {
-			delete[] accounts;
+		if (input == 5)
 			return 0;
-		}
 
 		duty(input);
 	}
