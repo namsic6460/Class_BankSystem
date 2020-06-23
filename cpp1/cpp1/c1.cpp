@@ -31,7 +31,7 @@ public:
 	const int getBalance() const;
 	const char* getCusName() const;
 	const char* getRRN() const;
-	const int addBalance(const int balance);
+	const bool addBalance(const int balance);
 };
 
 class AccountManager {
@@ -97,7 +97,7 @@ const int Account::getBalance() const {
 	return this->balance;
 }
 
-const int Account::addBalance(const int balance) {
+const bool Account::addBalance(const int balance) {
 	if (this->getBalance() + balance < 0)
 		return false;
 
