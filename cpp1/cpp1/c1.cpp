@@ -22,7 +22,6 @@ protected:
 	int balance = 0;
 	char* cusName = new char[NAME_LEN];
 	char* RRN = new char[RRN_LEN];
-	bool isDpAcc = false;
 
 public:
 	Account();
@@ -33,13 +32,13 @@ public:
 	const int getBalance() const;
 	char* getCusName() const;
 	char* getRRN() const;
-	const bool getIsDpAcc() const;
 	const void setBalance(const int balance);
 	const int addBalance(const int balance);
 };
 
 class DepositAccount : public Account {
 public:
+	DepositAccount();
 	DepositAccount(int accId, int balance, char* cusName, char* RRN);
 	DepositAccount(const DepositAccount& account);
 	virtual ~DepositAccount();
@@ -49,15 +48,19 @@ public:
 class AccountManager {
 private:
 	int accountSize = 0;
+	int dpAccountSize = 0;
 	Account* accounts = new Account[ACCOUNT_MAX];
+	DepositAccount* dpAccounts = new DepositAccount[ACCOUNT_MAX];
 public:
 	AccountManager();
 	~AccountManager();
 	const int getAccountSize() const;
+	const int getDpAccountSize() const;
 	Account* getAccounts() const;
+	DepositAccount* getDpAccounts() const;
 	const void checkAccount(const char* RRN, const int id) const;
 	Account* findAccount(const int id) const;
-	Account* findDpAccount(const int id) const;
+	DepositAccount* findDpAccount(const int id) const;
 	const void duty(const int input);
 	const void seeMenu() const;
 	void mkAcc();
@@ -73,7 +76,7 @@ Account::Account() {}
 
 Account::Account(int accId, int balance, char* cusName, char* RRN) {
 	this->accId = accId;
-	this->setBalance(balance);
+	this->balance = balance;
 	this->cusName = cusName;
 	this->RRN = RRN;
 }
@@ -119,10 +122,6 @@ char* Account::getRRN() const {
 	return this->RRN;
 }
 
-const bool Account::getIsDpAcc() const {
-	return this->isDpAcc;
-}
-
 const int Account::addBalance(const int balance) {
 	this->balance += balance;
 
@@ -145,16 +144,25 @@ const int AccountManager::getAccountSize() const {
 	return this->accountSize;
 }
 
+const int AccountManager::getDpAccountSize() const {
+	return this->dpAccountSize;
+}
+
 Account* AccountManager::getAccounts() const {
 	return this->accounts;
 }
 
+DepositAccount* AccountManager::getDpAccounts() const {
+	return this->dpAccounts;
+}
+
+DepositAccount::DepositAccount() {}
+
 DepositAccount::DepositAccount(int accId, int balance, char* cusName, char* RRN) {
 	this->accId = accId;
-	this->balance = 0;
+	this->balance = balance;
 	this->cusName = cusName;
 	this->RRN = RRN;
-	this->isDpAcc = true;
 }
 
 DepositAccount::DepositAccount(const DepositAccount& account) {
@@ -252,12 +260,12 @@ Account* AccountManager::findAccount(const int id) const {
 	throw exception("NPE");
 }
 
-Account* AccountManager::findDpAccount(const int id) const {
-	const int size = accManager->getAccountSize();
-	Account* accounts = accManager->getAccounts();
+DepositAccount* AccountManager::findDpAccount(const int id) const {
+	const int size = accManager->getDpAccountSize();
+	DepositAccount* accounts = accManager->getDpAccounts();
 
 	for (int i = 0; i < size; i++) {
-		if (accounts[i].getAccId() == id && accounts[i].getIsDpAcc() == true)
+		if (accounts[i].getAccId() == id)
 			return &accounts[i];
 	}
 
@@ -313,8 +321,8 @@ void AccountManager::mkDpAcc() {
 	cout << "입금액: ";
 	cin >> balance;
 
-	if (this->accountSize == ACCOUNT_MAX) {
-		cout << "계좌가 이미 " << ACCOUNT_MAX << "개입니다." << endl;
+	if (this->dpAccountSize == ACCOUNT_MAX) {
+		cout << "예금 계좌가 이미 " << ACCOUNT_MAX << "개입니다." << endl;
 		return;
 	}
 
@@ -338,7 +346,7 @@ void AccountManager::mkDpAcc() {
 		return;
 	}
 
-	this->accounts[this->accountSize++] = *(new DepositAccount(id, balance, find->getCusName(), find->getRRN()));
+	this->dpAccounts[this->dpAccountSize++] = *(new DepositAccount(id, balance, find->getCusName(), find->getRRN()));
 	cout << "예금 계좌 개설이 완료되었습니다." << endl;
 
 	return;
@@ -347,32 +355,44 @@ void AccountManager::mkDpAcc() {
 const void AccountManager::deposit() const {
 	int balance;
 	int id;
-	Account* find;
+	int isDp;
+	int interest;
 
 	cout << "계좌ID: ";
 	cin >> id;
 	cout << "입금액: ";
 	cin >> balance;
+	cout << "계좌 종류(일반: 0, 예금: 1): ";
+	cin >> isDp;
 
 	if (accountSize == 0) {
 		cout << "현재 등록된 계좌 정보가 없습니다." << endl;
 		return;
 	}
 
+
 	if (balance < 1) {
 		cout << "입금은 1원 이상이어야 합니다." << endl;
 		return;
 	}
 
-	try {
-		find = this->findAccount(id);
-	}
-	catch (exception) {
-		cout << "해당 계좌 ID를 가진 계좌 정보를 찾을 수 없습니다." << endl;
-		return;
+	if (!isDp) {
+		try {
+			interest = this->findDpAccount(id)->addBalance(balance);
+		} catch (exception) {
+			cout << "해당 계좌 ID를 가진 계좌 정보를 찾을 수 없습니다." << endl;
+			return;
+		}
 	}
 
-	int interest = find->addBalance(balance);
+	else {
+		try {
+			interest = this->findDpAccount(id)->addBalance(balance);
+		} catch (exception) {
+			cout << "해당 계좌 ID를 가진 예금 계좌 정보를 찾을 수 없습니다." << endl;
+			return;
+		}
+	}
 
 	cout << "이자 : " << interest << "원" << endl;
 	cout << "입금이 완료되었습니다." << endl;
@@ -381,12 +401,15 @@ const void AccountManager::deposit() const {
 const void AccountManager::withdraw() const {
 	int balance;
 	int id;
-	Account* find;
+	int isDp;
+	bool result;
 
 	cout << "계좌ID: ";
 	cin >> id;
 	cout << "출금액: ";
 	cin >> balance;
+	cout << "계좌 종류(일반: 0, 예금: 1): ";
+	cin >> isDp;
 
 	if (this->accountSize == 0) {
 		cout << "현재 등록된 계좌 정보가 없습니다." << endl;
@@ -398,16 +421,27 @@ const void AccountManager::withdraw() const {
 		return;
 	}
 
-	try {
-		find = this->findAccount(id);
-	}
-	catch (exception) {
-		cout << "해당 계좌 ID를 가진 계좌 정보를 찾을 수 없습니다." << endl;
-		return;
+	balance *= -1;
+	if (!isDp) {
+		try {
+			result = this->findAccount(id)->addBalance(balance);
+		} catch (exception) {
+			cout << "해당 계좌 ID를 가진 계좌 정보를 찾을 수 없습니다." << endl;
+			return;
+		}
 	}
 
-	balance *= -1;
-	if (find->addBalance(balance))
+	else {
+		try {
+			result = this->findDpAccount(id)->addBalance(balance);
+		} catch (exception) {
+			cout << "해당 계좌 ID를 가진 예금 계좌 정보를 찾을 수 없습니다." << endl;
+			return;
+		}
+	}
+
+	
+	if (result)
 		cout << "출금이 완료되었습니다." << endl;
 	else
 		cout << "잔액이 부족합니다." << endl;
@@ -419,20 +453,27 @@ const void AccountManager::seeList() const {
 		return;
 	}
 
-	cout << "------------" << endl;
+	cout << "----일반-----" << endl;
 	for (int i = 0; i < this->accountSize; i++) {
-		cout << "계좌ID: " << accounts[i].getAccId();
-		if (accounts[i].getIsDpAcc() == true)
-			cout << "(예금)";
-		cout << endl;
-
+		cout << "계좌ID: " << accounts[i].getAccId() << endl;
 		cout << "이  름: " << accounts[i].getCusName() << endl;
 		cout << "잔  액: " << accounts[i].getBalance() << endl;
 
 		if (i < this->accountSize - 1)
 			cout << endl;
 	}
-	cout << "------------" << endl;
+
+	cout << endl << "----예금----" << endl;
+	for (int i = 0; i < this->dpAccountSize; i++) {
+		cout << "계좌ID: " << dpAccounts[i].getAccId() << endl;
+		cout << "이  름: " << dpAccounts[i].getCusName() << endl;
+		cout << "잔  액: " << dpAccounts[i].getBalance() << endl;
+
+		if (i < this->accountSize - 1)
+			cout << endl;
+	}
+	
+	cout << endl;
 }
 
 int main() {
