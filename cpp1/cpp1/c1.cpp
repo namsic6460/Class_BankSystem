@@ -32,7 +32,7 @@ public:
 	const int getBalance() const;
 	char* getCusName() const;
 	char* getRRN() const;
-	const void setBalance(const int balance);
+	const bool setBalance(const int balance);
 	const int addBalance(const int balance);
 };
 
@@ -130,8 +130,13 @@ const int Account::addBalance(const int balance) {
 	return interest;
 }
 
-const void Account::setBalance(const int balance) {
-	this->balance = balance;
+const bool Account::setBalance(const int balance) {
+	if (balance >= 0) {
+		this->balance = balance;
+		return true;
+	}
+
+	return false;
 }
 
 AccountManager::AccountManager() {}
@@ -378,7 +383,7 @@ const void AccountManager::deposit() const {
 
 	if (!isDp) {
 		try {
-			interest = this->findDpAccount(id)->addBalance(balance);
+			interest = this->findAccount(id)->addBalance(balance);
 		} catch (exception) {
 			cout << "해당 계좌 ID를 가진 계좌 정보를 찾을 수 없습니다." << endl;
 			return;
@@ -424,7 +429,8 @@ const void AccountManager::withdraw() const {
 	balance *= -1;
 	if (!isDp) {
 		try {
-			result = this->findAccount(id)->addBalance(balance);
+			Account *find = this->findAccount(id);
+			result = find->setBalance(find->getBalance() + balance);
 		} catch (exception) {
 			cout << "해당 계좌 ID를 가진 계좌 정보를 찾을 수 없습니다." << endl;
 			return;
@@ -433,7 +439,8 @@ const void AccountManager::withdraw() const {
 
 	else {
 		try {
-			result = this->findDpAccount(id)->addBalance(balance);
+			DepositAccount *find = this->findDpAccount(id);
+			result = find->addBalance(find->getBalance() + balance);
 		} catch (exception) {
 			cout << "해당 계좌 ID를 가진 예금 계좌 정보를 찾을 수 없습니다." << endl;
 			return;
