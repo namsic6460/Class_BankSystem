@@ -70,6 +70,7 @@ public:
 	const void seeList() const;
 };
 
+//AccountManager 전역 변수 - Account 소멸자에서 사용
 AccountManager* accManager = new AccountManager();
 
 Account::Account() {}
